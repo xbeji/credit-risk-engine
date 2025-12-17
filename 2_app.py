@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+import datetime
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -15,7 +16,7 @@ st.set_page_config(
 # --- 🎨 CUSTOM NEON CSS ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;600&family=Fira+Code:wght@400&display=swap');
 
     /* GLOBAL THEME */
     .stApp {
@@ -54,6 +55,41 @@ st.markdown("""
     .neon-card:hover {
         box-shadow: 0 0 25px rgba(0, 242, 255, 0.3);
         border-left-color: #ff00ff;
+    }
+
+    /* TERMINAL LOGS DESIGN (NEW) */
+    .terminal-box {
+        background-color: #0a0a0a;
+        border: 1px solid #333;
+        border-left: 4px solid #33ff00; /* Hacker Green Border */
+        border-radius: 5px;
+        padding: 20px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        color: #e0e0e0;
+        margin-top: 10px;
+        box-shadow: inset 0 0 20px rgba(0, 20, 0, 0.8);
+    }
+    .log-line {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #1a1a1a;
+        padding-bottom: 4px;
+    }
+    .log-time {
+        color: #555;
+        margin-right: 15px;
+        font-size: 0.8rem;
+    }
+    .log-tag {
+        color: #00f2ff;
+        margin-right: 10px;
+        font-weight: bold;
+        min-width: 80px;
+    }
+    .log-val {
+        color: #33ff00;
     }
 
     /* INPUT FIELDS */
@@ -133,32 +169,43 @@ def get_neon_status(score):
         return "REJECTED", "HIGH RISK", "#ff0000" # Neon Red
 
 # --- 📊 CHART FUNCTIONS ---
-def make_gauge(score, color):
-    fig = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = score,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "RISK SCORE", 'font': {'size': 20, 'color': '#888', 'family': 'Orbitron'}},
-        number = {'font': {'size': 60, 'color': color, 'family': 'Orbitron'}},
-        gauge = {
-            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#333", 'tickfont': {'family': 'Rajdhani', 'color': '#666'}},
-            'bar': {'color': color, 'thickness': 0.8}, # Thicker, solid bar
-            'bgcolor': "rgba(0,0,0,0)",
-            'borderwidth': 0,
-            'steps': [
-                {'range': [0, 100], 'color': '#111'} # Dark track background
-            ],
-            'threshold': {
-                'line': {'color': "white", 'width': 2},
-                'thickness': 0.8,
-                'value': score
-            }
-        }))
-    
+def make_risk_donut(score, color):
+    # Professional Donut Chart instead of Speedometer
+    fig = go.Figure(data=[go.Pie(
+        labels=['Score', 'Remaining'],
+        values=[score, 100-score],
+        hole=0.75, # Thinner ring looks more professional
+        marker_colors=[color, '#1f1f1f'], # Neon fill vs Dark Grey background
+        textinfo='none',
+        hoverinfo='none',
+        sort=False, # Don't reorder, keep Score first
+        direction='clockwise'
+    )])
+
+    # Add Center Annotation
     fig.update_layout(
-        paper_bgcolor = "rgba(0,0,0,0)", 
-        font = {'color': "#e0e0e0", 'family': "Orbitron"},
-        margin=dict(l=30, r=30, t=40, b=30),
+        annotations=[
+            dict(
+                text=str(int(score)), 
+                x=0.5, y=0.55, 
+                font_size=60, 
+                font_family="Orbitron", 
+                font_color=color, 
+                showarrow=False
+            ),
+            dict(
+                text="RISK SCORE", 
+                x=0.5, y=0.35, 
+                font_size=16, 
+                font_family="Rajdhani", 
+                font_color="#888", 
+                showarrow=False
+            )
+        ],
+        showlegend=False,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=20, b=20, l=20, r=20),
         height=300
     )
     return fig
@@ -246,7 +293,7 @@ if page == "SIMULATION":
         
         with g_col:
             st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-            st.plotly_chart(make_gauge(score, color), use_container_width=True)
+            st.plotly_chart(make_risk_donut(score, color), use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
         with r_col:
@@ -255,15 +302,48 @@ if page == "SIMULATION":
             st.plotly_chart(make_radar(d_pts, s_pts, h_pts), use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # 3. Data Breakdown
+        # 3. Data Breakdown (IMPROVED LOGS)
         st.write("")
-        st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-        st.markdown("### SYSTEM LOGS")
-        st.text(f"> CALCULATING DTI RATIO... {int(dti*100)}% (POINTS: {d_pts})")
-        st.text(f"> VERIFYING STABILITY... {years} YEARS (POINTS: {s_pts})")
-        st.text(f"> CHECKING HISTORY... {int(history*100)}% (POINTS: {h_pts})")
-        st.text(f"> FINAL AGGREGATION... {score}/100")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("### 🖥️ KERNEL_OPERATIONS.log")
+        
+        # Generate fake milliseconds for realism
+        now = datetime.datetime.now()
+        t1 = now.strftime("%H:%M:%S:021")
+        t2 = now.strftime("%H:%M:%S:145")
+        t3 = now.strftime("%H:%M:%S:382")
+        t4 = now.strftime("%H:%M:%S:899")
+        t5 = now.strftime("%H:%M:%S:950")
+
+        log_html = f"""
+        <div class="terminal-box">
+            <div class="log-line">
+                <span class="log-time">[{t1}]</span> 
+                <span class="log-tag">[INIT]</span> 
+                <span>STARTING SEQUENCE...</span>
+            </div>
+            <div class="log-line">
+                <span class="log-time">[{t2}]</span> 
+                <span class="log-tag">[CALC]</span> 
+                <span>DTI_RATIO COMPUTED: <span class="log-val">{int(dti*100)}%</span> (POINTS: {d_pts})</span>
+            </div>
+            <div class="log-line">
+                <span class="log-time">[{t3}]</span> 
+                <span class="log-tag">[VERIFY]</span> 
+                <span>EMPLOYMENT_STABILITY CHECK: <span class="log-val">{years} YRS</span> (POINTS: {s_pts})</span>
+            </div>
+            <div class="log-line">
+                <span class="log-time">[{t4}]</span> 
+                <span class="log-tag">[AUDIT]</span> 
+                <span>CREDIT_HISTORY ANALYSIS: <span class="log-val">{int(history*100)}%</span> (POINTS: {h_pts})</span>
+            </div>
+             <div class="log-line" style="border-bottom: none;">
+                <span class="log-time">[{t5}]</span> 
+                <span class="log-tag" style="color:{color}">[FINAL]</span> 
+                <span style="color:{color}; font-weight:bold;">DECISION GENERATED: {status} (SCORE: {score}/100)</span>
+            </div>
+        </div>
+        """
+        st.markdown(log_html, unsafe_allow_html=True)
 
 elif page == "DATABASE_ADMIN":
     st.title("ADMIN // DATABASE_VIEW")
