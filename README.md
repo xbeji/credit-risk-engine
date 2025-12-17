@@ -26,37 +26,36 @@ It demonstrates the intersection of **Information Systems** (Complex SQL Schemas
 * **Analytics:** Pandas
 
 ## **📂 Project Structure**
-
+```
 credit-risk-engine/  
 │  
 ├── 1\_init\_db.py    \# Database Architect: Creates tables and seeds 50 fake users  
 ├── 2\_app.py        \# The Application: Contains the Scoring Logic & UI  
 ├── requirements.txt \# Dependencies  
 └── README.md       \# Documentation
-
+```
 ## **⚙️ Installation & Setup**
 
 ### **1\. Clone the Repository**
-
-git clone \[https://github.com/yourusername/credit-risk-engine.git\](https://github.com/yourusername/credit-risk-engine.git)  
+```
+git clone https://github.com/yourusername/credit-risk-engine.git\
 cd credit-risk-engine
-
+```
 ### **2\. Install Dependencies**
-
+```
 pip install \-r requirements.txt
-
+```
 ### **3\. Initialize the Database**
-
+```
 Run this script once to create the SQL tables and generate mock banking data.
-
 python 1\_init\_db.py
-
+```
 ### **4\. Launch the Dashboard**
 
 Start the local web server.
-
+```
 streamlit run 2\_app.py
-
+```
 ## **📊 The Scoring Logic**
 
 The model calculates a score out of 100 based on the following matrix:
