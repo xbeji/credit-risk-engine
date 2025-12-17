@@ -1,274 +1,300 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Credit Risk Engine",
+    page_title="NEON | Credit Risk Engine",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# --- CUSTOM CSS FOR "CYBER/TECH" THEME ---
+# --- 🎨 CUSTOM NEON CSS ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;600&display=swap');
 
-    /* GLOBAL RESET */
+    /* GLOBAL THEME */
     .stApp {
-        background-color: #0d1117; /* GitHub Dimmed */
-        font-family: 'Inter', sans-serif;
+        background-color: #050505;
+        background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000000 100%);
+        color: #e0e0e0;
+        font-family: 'Rajdhani', sans-serif;
     }
-    
+
     /* TYPOGRAPHY */
-    h1, h2, h3, .stMetricLabel {
-        font-family: 'Fira Code', monospace !important;
-        letter-spacing: -0.5px;
+    h1, h2, h3 {
+        font-family: 'Orbitron', sans-serif !important;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
     }
     
     h1 {
-        background: linear-gradient(90deg, #58a6ff, #7ee787);
+        background: linear-gradient(90deg, #00f2ff, #ff00ff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 700;
-        font-size: 3rem !important;
-    }
-    
-    p, .stMarkdown {
-        color: #8b949e !important;
+        font-size: 3.5rem !important;
     }
 
-    /* CUSTOM CARDS */
-    div.css-1r6slb0, div.stMarkdown { 
-        /* Tweak default container behavior if needed */
+    /* NEON CARDS */
+    .neon-card {
+        background: rgba(20, 20, 20, 0.6);
+        border: 1px solid #333;
+        border-left: 4px solid #00f2ff;
+        border-radius: 10px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    .neon-card:hover {
+        box-shadow: 0 0 25px rgba(0, 242, 255, 0.3);
+        border-left-color: #ff00ff;
     }
 
-    .tech-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        transition: transform 0.2s;
-    }
-    .tech-card:hover {
-        border-color: #58a6ff;
-        transform: translateY(-2px);
-    }
-    .tech-card h4 {
-        color: #58a6ff;
-        margin-top: 0;
-        font-size: 1.1rem;
-        border-bottom: 1px solid #30363d;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-    }
-
-    /* METRICS */
-    .metric-container {
-        text-align: center;
-        padding: 10px;
-    }
-    .metric-value {
-        font-family: 'Fira Code', monospace;
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #e6edf3;
-    }
-    .metric-label {
-        font-size: 0.9rem;
-        color: #8b949e;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* INPUT FIELDS - DARK MODE */
+    /* INPUT FIELDS */
     .stTextInput input, .stNumberInput input {
-        background-color: #010409 !important;
-        color: #e6edf3 !important;
-        border: 1px solid #30363d !important;
-        font-family: 'Fira Code', monospace !important;
-        border-radius: 6px;
+        background-color: #0a0a0a !important;
+        color: #00f2ff !important;
+        border: 1px solid #333 !important;
+        font-family: 'Orbitron', monospace !important;
+        border-radius: 0px !important;
     }
     .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #58a6ff !important;
-        box-shadow: 0 0 0 1px #58a6ff !important;
+        border-color: #00f2ff !important;
+        box-shadow: 0 0 10px #00f2ff !important;
     }
 
-    /* BUTTONS */
+    /* GLOWING BUTTON */
     .stButton button {
-        background: linear-gradient(90deg, #238636, #2ea043);
-        color: white;
-        border: none;
-        font-family: 'Fira Code', monospace;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        transition: all 0.2s;
+        background: transparent;
+        border: 2px solid #00f2ff;
+        color: #00f2ff;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        font-weight: bold;
+        padding: 15px 30px;
+        border-radius: 0px;
+        transition: 0.3s;
         width: 100%;
+        text-shadow: 0 0 5px #00f2ff;
+        box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
     }
     .stButton button:hover {
-        background: linear-gradient(90deg, #2ea043, #3fb950);
-        box-shadow: 0 0 10px rgba(46, 160, 67, 0.4);
-        border: none;
+        background: #00f2ff;
+        color: #000;
+        box-shadow: 0 0 30px #00f2ff;
     }
 
-    /* SIDEBAR */
-    section[data-testid="stSidebar"] {
-        background-color: #010409;
-        border-right: 1px solid #30363d;
-    }
-    
-    /* DATAFRAME */
-    .stDataFrame {
-        border: 1px solid #30363d;
-        border-radius: 8px;
+    /* PLOTLY CHART BACKGROUNDS */
+    .js-plotly-plot .plotly .main-svg {
+        background: transparent !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 1. LOGIC ---
+# --- 🧠 LOGIC ENGINE ---
 def calculate_score(income, debt, years_employed, history_pct):
     score = 0
-    # DTI Logic
+    
+    # 1. DTI Logic (Max 40 pts)
     if income == 0: dti = 100 
     else: dti = (debt / income)
     
-    if dti < 0.2: score += 40
-    elif dti < 0.4: score += 30
-    elif dti < 0.6: score += 10
-    else: score += 0
+    dti_pts = 0
+    if dti < 0.2: dti_pts = 40
+    elif dti < 0.4: dti_pts = 30
+    elif dti < 0.6: dti_pts = 10
     
-    # Stability Logic
-    if years_employed >= 5: score += 30
-    elif years_employed >= 2: score += 20
-    else: score += 10
+    # 2. Stability Logic (Max 30 pts)
+    stab_pts = 10
+    if years_employed >= 5: stab_pts = 30
+    elif years_employed >= 2: stab_pts = 20
     
-    # History Logic
-    if history_pct >= 0.95: score += 30
-    elif history_pct >= 0.85: score += 20
-    elif history_pct >= 0.70: score += 10
-    else: score += 0
+    # 3. History Logic (Max 30 pts)
+    hist_pts = 0
+    if history_pct >= 0.95: hist_pts = 30
+    elif history_pct >= 0.85: hist_pts = 20
+    elif history_pct >= 0.70: hist_pts = 10
     
-    return score, dti
+    final_score = dti_pts + stab_pts + hist_pts
+    return final_score, dti, dti_pts, stab_pts, hist_pts
 
-def get_decision(score):
+def get_neon_status(score):
     if score >= 80:
-        return "APPROVED", "3.5% (Prime)", "#2ea043", "✅" 
+        return "APPROVED", "PRIME RATE", "#39ff14" # Neon Green
     elif score >= 50:
-        return "APPROVED", "8.0% (Sub-Prime)", "#d2a8ff", "⚠️"
+        return "APPROVED", "SUB-PRIME", "#ff00ff" # Neon Pink
     else:
-        return "REJECTED", "N/A", "#ff7b72", "🚫"
+        return "REJECTED", "HIGH RISK", "#ff0000" # Neon Red
 
-# --- 2. LAYOUT ---
-st.title("⚡ Credit_Risk_Engine")
-st.markdown("`v1.0.4` | Automated decisioning powered by **Python** & **SQL**.")
+# --- 📊 CHART FUNCTIONS ---
+def make_gauge(score, color):
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = score,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "RISK SCORE", 'font': {'color': '#e0e0e0', 'family': 'Orbitron'}},
+        number = {'font': {'color': color, 'family': 'Orbitron'}},
+        gauge = {
+            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#333"},
+            'bar': {'color': color},
+            'bgcolor': "#111",
+            'borderwidth': 2,
+            'bordercolor': "#333",
+            'steps': [
+                {'range': [0, 50], 'color': '#330000'},
+                {'range': [50, 80], 'color': '#330033'},
+                {'range': [80, 100], 'color': '#001a00'}],
+        }))
+    fig.update_layout(paper_bgcolor = "rgba(0,0,0,0)", font = {'color': "#e0e0e0", 'family': "Orbitron"})
+    return fig
+
+def make_radar(dti_pts, stab_pts, hist_pts):
+    # Normalize to 100% for visual balance
+    categories = ['DTI Ratio', 'Job Stability', 'Repayment Hist']
+    
+    # Max points: 40, 30, 30. We scale them to 10-100 for the chart visual
+    values = [dti_pts, stab_pts, hist_pts]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=values,
+        theta=categories,
+        fill='toself',
+        name='Applicant Profile',
+        line_color='#00f2ff',
+        fillcolor='rgba(0, 242, 255, 0.2)'
+    ))
+    
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 40], color="#555"),
+            bgcolor="rgba(0,0,0,0)"
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#e0e0e0", family="Orbitron"),
+        margin=dict(l=40, r=40, t=20, b=20),
+        showlegend=False
+    )
+    return fig
+
+# --- 🖥️ APP LAYOUT ---
+st.title("NEON_RISK_ENGINE v2.0")
+st.markdown("`SYSTEM STATUS: ONLINE` | `MODE: INTERACTIVE`")
 st.write("")
 
 # Sidebar
 with st.sidebar:
-    st.header("Navigation")
-    page = st.radio("Go to:", ["Loan Simulator", "Admin Database"])
+    st.header("SYSTEM CONTROL")
+    page = st.radio("SELECT MODULE:", ["SIMULATION", "DATABASE_ADMIN"])
     st.write("---")
-    st.caption("System Status: ● Online")
+    st.caption("SECURE CONNECTION ESTABLISHED")
 
-if page == "Loan Simulator":
-    # 2-Column Inputs wrapped in HTML Cards for styling
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown('<div class="tech-card"><h4>👤 Applicant Financials</h4>', unsafe_allow_html=True)
-        income = st.number_input("Monthly Income ($)", value=10000, step=500)
-        debt = st.number_input("Total Debt ($)", value=2000, step=500)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col2:
-        st.markdown('<div class="tech-card"><h4>📜 History & Stability</h4>', unsafe_allow_html=True)
-        years = st.number_input("Years Employed", value=3, step=1)
-        history = st.slider("Repayment Score (%)", 0, 100, 95) / 100.0
-        st.markdown('</div>', unsafe_allow_html=True)
+if page == "SIMULATION":
+    # INPUT SECTION
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown('<p style="color:#00f2ff">INCOME (SAR)</p>', unsafe_allow_html=True)
+        income = st.number_input("", value=12000, step=1000, key="inc")
+    with c2:
+        st.markdown('<p style="color:#ff00ff">TOTAL DEBT (SAR)</p>', unsafe_allow_html=True)
+        debt = st.number_input("", value=3000, step=500, key="dbt")
+    with c3:
+        st.markdown('<p style="color:#00f2ff">YEARS EMPLOYED</p>', unsafe_allow_html=True)
+        years = st.number_input("", value=4, step=1, key="yrs")
+    with c4:
+        st.markdown('<p style="color:#ff00ff">HISTORY SCORE (%)</p>', unsafe_allow_html=True)
+        history = st.slider("", 0, 100, 95, key="hst") / 100.0
 
     st.write("")
-    
-    # Full Width Action Button
-    if st.button(">> EXECUTE_RISK_ALGORITHM()"):
-        final_score, dti = calculate_score(income, debt, years, history)
-        decision, interest, color, icon = get_decision(final_score)
-        
-        # Spacer
-        st.write("")
-        st.write("")
+    if st.button("INITIATE ANALYSIS SEQUENCE"):
+        # Calc
+        score, dti, d_pts, s_pts, h_pts = calculate_score(income, debt, years, history)
+        status, sub_status, color = get_neon_status(score)
 
-        # --- RESULT BANNER ---
+        # RESULTS SECTION
+        st.write("---")
+        
+        # 1. Main Status Banner
         st.markdown(f"""
-        <div style="background-color: {color}15; border: 1px solid {color}; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-            <div style="font-family: 'Fira Code'; font-size: 1.2rem; color: {color}; margin-bottom: 10px;">ALGORITHM OUTPUT</div>
-            <h1 style="color: {color}; margin: 0; background: none; -webkit-text-fill-color: {color}; font-size: 4rem !important;">{icon} {decision}</h1>
-            <p style="color: #c9d1d9 !important; font-size: 1.2rem; margin-top: 10px;">Interest Rate: <strong style="color: white;">{interest}</strong></p>
+        <div style="border: 2px solid {color}; background: rgba(0,0,0,0.8); border-radius: 0px; text-align: center; padding: 20px; box-shadow: 0 0 40px {color}40;">
+            <h1 style="color: {color} !important; text-shadow: 0 0 20px {color}; margin: 0;">{status}</h1>
+            <h3 style="color: #fff; margin-top: 10px;">TIER: {sub_status}</h3>
         </div>
         """, unsafe_allow_html=True)
         
-        # --- METRICS GRID ---
-        c1, c2, c3 = st.columns(3)
+        st.write("")
         
-        with c1:
-            st.markdown(f"""
-            <div class="tech-card metric-container">
-                <div class="metric-label">Risk Score</div>
-                <div class="metric-value" style="color: {color};">{final_score}/100</div>
-            </div>
-            """, unsafe_allow_html=True)
+        # 2. Charts
+        g_col, r_col = st.columns([1, 1])
+        
+        with g_col:
+            st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+            st.plotly_chart(make_gauge(score, color), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-        with c2:
-            st.markdown(f"""
-            <div class="tech-card metric-container">
-                <div class="metric-label">DTI Ratio</div>
-                <div class="metric-value">{int(dti * 100)}%</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        with c3:
-            st.markdown(f"""
-            <div class="tech-card metric-container">
-                <div class="metric-label">Data Points</div>
-                <div class="metric-value">3</div>
-            </div>
-            """, unsafe_allow_html=True)
+        with r_col:
+            st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; color: #00f2ff'>FACTOR ANALYSIS</h3>", unsafe_allow_html=True)
+            st.plotly_chart(make_radar(d_pts, s_pts, h_pts), use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        # Logic Trace
-        with st.expander("View Logic Trace"):
-            st.code(f"""
-[LOG] Processing Application...
-> DTI Calculated: {dti:.2f} ({int(dti*100)}%) -> Score Impact: {40 if dti < 0.2 else (30 if dti < 0.4 else 0)} pts
-> Stability: {years} Years -> Score Impact: {30 if years >= 5 else 10} pts
-> History: {int(history*100)}% -> Score Impact: {30 if history >= 0.95 else 20} pts
---------------------------------------------------
-TOTAL SCORE: {final_score}/100
-DECISION: {decision}
-            """, language="json")
+        # 3. Data Breakdown
+        st.write("")
+        st.markdown('<div class="neon-card">', unsafe_allow_html=True)
+        st.markdown("### SYSTEM LOGS")
+        st.text(f"> CALCULATING DTI RATIO... {int(dti*100)}% (POINTS: {d_pts})")
+        st.text(f"> VERIFYING STABILITY... {years} YEARS (POINTS: {s_pts})")
+        st.text(f"> CHECKING HISTORY... {int(history*100)}% (POINTS: {h_pts})")
+        st.text(f"> FINAL AGGREGATION... {score}/100")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-elif page == "Admin Database":
-    st.title("📂 SQL Database")
+elif page == "DATABASE_ADMIN":
+    st.title("ADMIN // DATABASE_VIEW")
     
     conn = sqlite3.connect('credit_risk.db')
+    
+    # Advanced Query
     query = """
     SELECT 
         a.id, 
         a.name, 
         a.monthly_income, 
-        c.total_debt, 
+        c.total_debt,
+        (c.total_debt / a.monthly_income) as dti_ratio,
         l.repayment_on_time_pct
     FROM applicants a
     JOIN credit_bureau c ON a.id = c.applicant_id
     JOIN loan_history l ON a.id = l.applicant_id
-    LIMIT 10
     """
     df = pd.read_sql_query(query, conn)
     
-    st.dataframe(df, use_container_width=True)
-    st.caption("Connected to: sqlite:///credit_risk.db")
+    # INTERACTIVE SCATTER PLOT
+    st.markdown("### MARKET ANALYSIS: INCOME vs DEBT")
+    fig = px.scatter(
+        df, 
+        x="monthly_income", 
+        y="total_debt", 
+        color="dti_ratio",
+        size="monthly_income",
+        hover_data=["name"],
+        color_continuous_scale=["#39ff14", "#ff00ff"],
+        template="plotly_dark"
+    )
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)", 
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Orbitron", color="#00f2ff")
+    )
+    st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown("### Raw Query Execution")
-    st.code(query, language="sql")
+    # RAW DATA
+    st.markdown("### ENCRYPTED_RECORDS_TABLE")
+    st.dataframe(df, use_container_width=True)
+    
     conn.close()
