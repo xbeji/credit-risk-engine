@@ -138,20 +138,29 @@ def make_gauge(score, color):
         mode = "gauge+number",
         value = score,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "RISK SCORE", 'font': {'color': '#e0e0e0', 'family': 'Orbitron'}},
-        number = {'font': {'color': color, 'family': 'Orbitron'}},
+        title = {'text': "RISK SCORE", 'font': {'size': 20, 'color': '#888', 'family': 'Orbitron'}},
+        number = {'font': {'size': 60, 'color': color, 'family': 'Orbitron'}},
         gauge = {
-            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#333"},
-            'bar': {'color': color},
-            'bgcolor': "#111",
-            'borderwidth': 2,
-            'bordercolor': "#333",
+            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#333", 'tickfont': {'family': 'Rajdhani', 'color': '#666'}},
+            'bar': {'color': color, 'thickness': 0.8}, # Thicker, solid bar
+            'bgcolor': "rgba(0,0,0,0)",
+            'borderwidth': 0,
             'steps': [
-                {'range': [0, 50], 'color': '#330000'},
-                {'range': [50, 80], 'color': '#330033'},
-                {'range': [80, 100], 'color': '#001a00'}],
+                {'range': [0, 100], 'color': '#111'} # Dark track background
+            ],
+            'threshold': {
+                'line': {'color': "white", 'width': 2},
+                'thickness': 0.8,
+                'value': score
+            }
         }))
-    fig.update_layout(paper_bgcolor = "rgba(0,0,0,0)", font = {'color': "#e0e0e0", 'family': "Orbitron"})
+    
+    fig.update_layout(
+        paper_bgcolor = "rgba(0,0,0,0)", 
+        font = {'color': "#e0e0e0", 'family': "Orbitron"},
+        margin=dict(l=30, r=30, t=40, b=30),
+        height=300
+    )
     return fig
 
 def make_radar(dti_pts, stab_pts, hist_pts):
@@ -173,13 +182,15 @@ def make_radar(dti_pts, stab_pts, hist_pts):
     
     fig.update_layout(
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 40], color="#555"),
-            bgcolor="rgba(0,0,0,0)"
+            radialaxis=dict(visible=True, range=[0, 40], color="#444"),
+            bgcolor="rgba(0,0,0,0)",
+            angularaxis=dict(color="#888")
         ),
         paper_bgcolor="rgba(0,0,0,0)",
         font=dict(color="#e0e0e0", family="Orbitron"),
         margin=dict(l=40, r=40, t=20, b=20),
-        showlegend=False
+        showlegend=False,
+        height=300
     )
     return fig
 
@@ -240,7 +251,7 @@ if page == "SIMULATION":
             
         with r_col:
             st.markdown('<div class="neon-card">', unsafe_allow_html=True)
-            st.markdown("<h3 style='text-align: center; color: #00f2ff'>FACTOR ANALYSIS</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='text-align: center; color: #00f2ff; margin-bottom: 0px;'>FACTOR ANALYSIS</h3>", unsafe_allow_html=True)
             st.plotly_chart(make_radar(d_pts, s_pts, h_pts), use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
