@@ -29,32 +29,32 @@ It demonstrates the intersection of **Information Systems** (Complex SQL Schemas
 ```
 credit-risk-engine/  
 │  
-├── 1\_init\_db.py    \# Database Architect: Creates tables and seeds 50 fake users  
-├── 2\_app.py        \# The Application: Contains the Scoring Logic & UI  
-├── requirements.txt \# Dependencies  
-└── README.md       \# Documentation
+├── 1_init_db.py    # Database Architect: Creates tables and seeds 50 fake users  
+├── 2_app.py        # The Application: Contains the Scoring Logic & UI  
+├── requirements.txt # Dependencies  
+└── README.md       # Documentation
 ```
 ## **⚙️ Installation & Setup**
 
-### **1\. Clone the Repository**
+### **1. Clone the Repository**
 ```
-git clone https://github.com/yourusername/credit-risk-engine.git\
+git clone https://github.com/yourusername/credit-risk-engine.git
 cd credit-risk-engine
 ```
-### **2\. Install Dependencies**
+### **2. Install Dependencies**
 ```
-pip install \-r requirements.txt
+pip install -r requirements.txt
 ```
-### **3\. Initialize the Database**
+### **3. Initialize the Database**
 ```
 Run this script once to create the SQL tables and generate mock banking data.
-python 1\_init\_db.py
+python 1_init_db.py
 ```
-### **4\. Launch the Dashboard**
+### **4. Launch the Dashboard**
 
 Start the local web server.
 ```
-streamlit run 2\_app.py
+streamlit run 2_app.py
 ```
 ## **📊 The Scoring Logic**
 
@@ -62,11 +62,11 @@ The model calculates a score out of 100 based on the following matrix:
 
 | Factor | Weight | Condition | Score Contribution |
 | :---- | :---- | :---- | :---- |
-| **Debt-to-Income (DTI)** | **40%** | \< 20% (Excellent) | \+40 Points |
-|  |  | 20-40% (Good) | \+30 Points |
-|  |  | \> 60% (High Risk) | \+0 Points |
-| **Stability** | **30%** | \> 5 Years | \+30 Points |
-| **History** | **30%** | \> 95% On-Time | \+30 Points |
+| **Debt-to-Income (DTI)** | **40%** | < 20% (Excellent) | +40 Points |
+|  |  | 20-40% (Good) | +30 Points |
+|  |  | > 60% (High Risk) | +0 Points |
+| **Stability** | **30%** | > 5 Years | +30 Points |
+| **History** | **30%** | > 95% On-Time | +30 Points |
 
 ## **📝 License**
 
